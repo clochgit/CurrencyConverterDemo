@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
  */
 
 @RunWith(MockitoJUnitRunner.class)
-public class CurrencyConverterHelperUnitTest
+public class CurrencyConverterServiceUnitTest
 {
     @Mock
     CurrencyRateServiceWrapper _wrapper;
@@ -56,6 +56,24 @@ public class CurrencyConverterHelperUnitTest
         assertTrue(result.Input.ToCurrencyUnit.equalsIgnoreCase(toUnit));
         assertTrue(result.Output == resultAmount);
 
+    }
+
+    @Test
+    public void Given_RatesWithSameToAndFromUnit_When_Convert_Then_VerifyResult()
+    {
+        int sourceID = 123;
+        String fromUnit = "USD";
+        String toUnit = "USD";
+        Float fromAmount = 20.0f;
+
+        ConverterInput input = new ConverterInput(sourceID, fromUnit, toUnit, fromAmount);
+
+        CurrencyRate currencyRates = createCurrencyRates();
+
+        ConverterOutput result = _converter.convert(input);
+        assertTrue(result.Input.FromCurrencyUnit.equalsIgnoreCase(fromUnit));
+        assertTrue(result.Input.ToCurrencyUnit.equalsIgnoreCase(toUnit));
+        assertTrue(result.Output == fromAmount);
     }
 
     private CurrencyRate createCurrencyRates()
