@@ -9,6 +9,12 @@ import static cloch.demo.currencyconverter.business.UtilityKt.truncateTime;
  * Created by Chhorvorn on 8/2/2017.
  */
 
+/*
+TODO: ADD UNIT TEST
+FIX DECIMALFILTER
+APP LIFECYCLE
+FIX UI LOOK
+ */
 public class CurrencyConverterService
 {
     private CurrencyRate _exchangeRates;
@@ -44,20 +50,6 @@ public class CurrencyConverterService
         return _wrapper.getCurrencyExchangeRates(baseUnit)
                 .doOnNext(this::cacheExchangeRates);
     }
-
-//    public Observable<CurrencyRate> getCurrencyExchangeRates(String baseUnit)
-//    {
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl("http://api.fixer.io")
-//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-//                .addConverterFactory(GsonConverterFactory.create())
-//                .build();
-//
-//        return retrofit.create(CurrencyRateService.class)
-//                .getCurrency(baseUnit)
-//                .doOnNext(this::cacheExchangeRates);
-//    }
-
 
     private CurrencyRate get_exchangeRates(String baseUnit)
     {
