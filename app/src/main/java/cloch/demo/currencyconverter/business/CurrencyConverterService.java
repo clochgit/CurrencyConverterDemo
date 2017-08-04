@@ -3,7 +3,7 @@ package cloch.demo.currencyconverter.business;
 import java.util.Date;
 import io.reactivex.Observable;
 
-import static cloch.demo.currencyconverter.business.Utility.truncateTime;
+import static cloch.demo.currencyconverter.business.UtilityKt.truncateTime;
 
 /**
  * Created by Chhorvorn on 8/2/2017.
