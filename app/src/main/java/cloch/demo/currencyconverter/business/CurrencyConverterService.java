@@ -2,7 +2,8 @@ package cloch.demo.currencyconverter.business;
 
 import java.util.Date;
 import io.reactivex.Observable;
-import okhttp3.internal.Util;
+
+import static cloch.demo.currencyconverter.business.Utility.truncateTime;
 
 /**
  * Created by Chhorvorn on 8/2/2017.
@@ -17,24 +18,22 @@ public class CurrencyConverterService
     {
         _wrapper = wrapper;
     }
-    public CurrencyValue convert(String fromCurrencyUnit, float fromAmount, String toCurrencyUnit)
+    public ConverterOutput convert(ConverterInput input)
     {
-        CurrencyValue result = new CurrencyValue();
-        result.FromCurrencyUnit = fromCurrencyUnit;
-        result.ToCurrencyUnit = toCurrencyUnit;
-        if(result.FromCurrencyUnit.equalsIgnoreCase(result.ToCurrencyUnit))
+        ConverterOutput result = new ConverterOutput(input);
+        if(input.FromCurrencyUnit.equalsIgnoreCase(input.ToCurrencyUnit))
         {
-            result.Date = Utility.truncateTime(new Date());
+            result.Date = truncateTime(new Date());
             result.ToCurrencyRate = 1;
-            result.Value = fromAmount;
+            result.Output = input.Amount;
         }
         else
         {
-            CurrencyRate rates = get_exchangeRates(fromCurrencyUnit);
-            float value = rates.rates.get(toCurrencyUnit);
-            result.Value = fromAmount * value;
+            CurrencyRate rates = get_exchangeRates(input.FromCurrencyUnit);
+            float rateValue = rates.rates.get(input.ToCurrencyUnit);
             result.Date = rates.date;
-            result.ToCurrencyRate = value;
+            result.ToCurrencyRate = rateValue;
+            result.Output = input.Amount * rateValue;
         }
 
         return result;
@@ -62,7 +61,7 @@ public class CurrencyConverterService
 
     private CurrencyRate get_exchangeRates(String baseUnit)
     {
-        Date today = Utility.truncateTime(new Date());
+        Date today = truncateTime(new Date());
 
         if(_exchangeRates == null || !_exchangeRates.base.equalsIgnoreCase(baseUnit) || _exchangeRates.date.compareTo(today) != 0)
         {

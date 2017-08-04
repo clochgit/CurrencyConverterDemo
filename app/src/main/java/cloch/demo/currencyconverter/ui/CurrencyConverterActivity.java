@@ -8,14 +8,12 @@ import android.support.v7.widget.AppCompatTextView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 import cloch.demo.currencyconverter.R;
+import cloch.demo.currencyconverter.business.ConverterOutput;
 import cloch.demo.currencyconverter.business.CurrencyRate;
-import cloch.demo.currencyconverter.business.CurrencyValue;
 import cloch.demo.currencyconverter.business.AmountTextWatcher;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -63,32 +61,8 @@ public class CurrencyConverterActivity extends AppCompatActivity
         _textInputAmount1.addTextChangedListener(_textWatcher1);
         _textInputAmount2.addTextChangedListener(_textWatcher2);
 
-        _spinnerCurrency2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l)
-            {
-                _textWatcher1.setIgnoreChange(true);
-                _textWatcher2.setIgnoreChange(true);
-                _textWatcher1.triggerTextChange(_textInputAmount1.getText());
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView){}
-        });
-
-        _spinnerCurrency1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                _textWatcher1.setIgnoreChange(true);
-                _textWatcher2.setIgnoreChange(true);
-                _textWatcher2.triggerTextChange(_textInputAmount2.getText());
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
+        setupSpinner(_spinnerCurrency2, _textWatcher1);
+        setupSpinner(_spinnerCurrency1, _textWatcher2);
 
         _compositeDisposable.add(
                 _model.getCurrentExchangeRates(CurrencyConverterViewModel.DEFAULT_CURRENCY)
@@ -100,6 +74,22 @@ public class CurrencyConverterActivity extends AppCompatActivity
 
     }
 
+    private void setupSpinner(AppCompatSpinner spinner, AmountTextWatcher textWatcher)
+    {
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                _textWatcher1.setIgnoreChange(true);
+                _textWatcher2.setIgnoreChange(true);
+
+                textWatcher.triggerTextChange(textWatcher.getParent().getText());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+    }
+
     private AmountTextWatcher createTextWatcher(TextInputEditText editText, AppCompatSpinner fromSpinner, AppCompatSpinner toSpinner)
     {
         AmountTextWatcher textWatcher = new AmountTextWatcher(this, editText, fromSpinner, toSpinner);
@@ -108,9 +98,9 @@ public class CurrencyConverterActivity extends AppCompatActivity
                         .debounce(200, TimeUnit.MILLISECONDS)
                         .subscribeOn(AndroidSchedulers.mainThread())
                         .observeOn(Schedulers.io())
-                        .subscribe(fromValue->
+                        .subscribe(input->
                                 _compositeDisposable.add(
-                                        _model.convert(fromValue.FromCurrencyUnit, fromValue.Value, fromValue.ToCurrencyUnit)
+                                        _model.convert(input)
                                                 .observeOn(AndroidSchedulers.mainThread())
                                                 .subscribe(this::updateUIWithConversionResult))
                         )
@@ -131,33 +121,27 @@ public class CurrencyConverterActivity extends AppCompatActivity
 
     private void populateControls(CurrencyRate currencyRates)
     {
-        ArrayAdapter<String> adapter1 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
-        adapter1.addAll(currencyRates.rates.keySet());
-        adapter1.insert(currencyRates.base, 0);
-        _spinnerCurrency1.setAdapter(adapter1);
-
-        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
-        adapter2.addAll(currencyRates.rates.keySet());
-        _spinnerCurrency2.setAdapter(adapter2);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        adapter.addAll(currencyRates.rates.keySet());
+        adapter.insert(currencyRates.base, 0);
+        _spinnerCurrency1.setAdapter(adapter);
+        _spinnerCurrency2.setAdapter(adapter);
+        _spinnerCurrency1.setSelection(0);
+        _spinnerCurrency2.setSelection(0);
     }
 
-    private void updateUIWithConversionResult(CurrencyValue result)
+    private void updateUIWithConversionResult(ConverterOutput result)
     {
-        _textViewRateInfo.setText(String.format("1 %s = %s %s on %s", result.FromCurrencyUnit, result.ToCurrencyRate, result.ToCurrencyUnit, _dateFormat.format(result.Date)));
-        String spinner1Selection = (String)_spinnerCurrency1.getSelectedItem();
-        String spinner2Selection = (String)_spinnerCurrency2.getSelectedItem();
-        String value = String.format("%.2f", result.Value);
+        _textViewRateInfo.setText(String.format("1 %s = %s %s on %s", result.Input.FromCurrencyUnit, result.ToCurrencyRate, result.Input.ToCurrencyUnit, _dateFormat.format(result.Date)));
+        String value = String.format("%.2f", result.Output);
 
-        if(spinner1Selection.equalsIgnoreCase(result.ToCurrencyUnit))
-        {
-            _textInputAmount1.setText(value);
-        }
-        else if(spinner1Selection.equalsIgnoreCase(spinner2Selection))
-        {
-            //TODO:
-        }
+        if(result.Input.SourceID == _textInputAmount1.getId())
         {
             _textInputAmount2.setText(value);
+        }
+        else
+        {
+            _textInputAmount1.setText(value);
         }
     }
 }

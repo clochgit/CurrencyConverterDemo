@@ -15,7 +15,7 @@ import io.reactivex.subjects.Subject;
 
 public class AmountTextWatcher implements TextWatcher
 {
-    private final Subject<CurrencyValue> _textChangedSubject;
+    private final Subject<ConverterInput> _textChangedSubject;
     private final AppCompatActivity _activity;
     private final  TextInputEditText _parent;
     private final AppCompatSpinner _fromCurrencySpinner;
@@ -31,7 +31,12 @@ public class AmountTextWatcher implements TextWatcher
         _toCurrencySpinner = toCurrencySpinner;
     }
 
-    public Subject<CurrencyValue> TextChange()
+    public TextInputEditText getParent()
+    {
+        return _parent;
+    }
+
+    public Subject<ConverterInput> TextChange()
     {
         return _textChangedSubject;
     }
@@ -80,11 +85,13 @@ public class AmountTextWatcher implements TextWatcher
             return;
         }
 
-        CurrencyValue value = new CurrencyValue();
-        value.FromCurrencyUnit = (String)_fromCurrencySpinner.getSelectedItem();
-        value.ToCurrencyUnit = (String)_toCurrencySpinner.getSelectedItem();
-        value.Value = getValue(text);
-        _textChangedSubject.onNext(value);
+        ConverterInput input = new ConverterInput(
+                _parent.getId(),
+                (String)_fromCurrencySpinner.getSelectedItem(),
+                (String)_toCurrencySpinner.getSelectedItem(),
+                getValue(text));
+
+        _textChangedSubject.onNext(input);
     }
 
     private boolean validate(String value)
