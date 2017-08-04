@@ -23,6 +23,10 @@ import io.reactivex.schedulers.Schedulers;
 
 public class CurrencyConverterActivity extends AppCompatActivity
 {
+    private final String TEXTINPUT1_TEXT = "1";
+    private final String TEXTINPUT2_TEXT = "2";
+    private final String SPINNER1_SELECTION = "3";
+    private final String SPINNER2_SELECTION = "4";
 
     private final CompositeDisposable _compositeDisposable = new CompositeDisposable();
     private final DateFormat _dateFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -54,6 +58,15 @@ public class CurrencyConverterActivity extends AppCompatActivity
         _spinnerCurrency2 = findViewById(R.id.spinnerCurrency2);
         _textViewRateInfo = findViewById(R.id.textViewRateInfo);
 
+        if(savedInstanceState != null)
+        {
+            String value = savedInstanceState.getString(TEXTINPUT1_TEXT);
+            _textInputAmount1.setText(value == null ? "" : value);
+            value = savedInstanceState.getString(TEXTINPUT2_TEXT);
+            _textInputAmount2.setText(value == null ? "" : value);
+
+        }
+
         InputFilter[] filters = new InputFilter[]{new DecimalFilter(2)};
         _textInputAmount1.setFilters(filters);
         _textInputAmount2.setFilters(filters);
@@ -71,7 +84,7 @@ public class CurrencyConverterActivity extends AppCompatActivity
                 _model.getCurrentExchangeRates(CurrencyConverterViewModel.DEFAULT_CURRENCY)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(this::populateControls,
+                        .subscribe(rate->{populateControls(rate, savedInstanceState);},
                                 throwable -> {})
         );
 
@@ -113,24 +126,48 @@ public class CurrencyConverterActivity extends AppCompatActivity
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        outState.putString(TEXTINPUT1_TEXT, _textInputAmount1.getText().toString());
+        outState.putString(TEXTINPUT2_TEXT, _textInputAmount2.getText().toString());
+        outState.putString(SPINNER1_SELECTION, (String)_spinnerCurrency1.getSelectedItem());
+        outState.putString(SPINNER2_SELECTION, (String)_spinnerCurrency2.getSelectedItem());
+
+        super.onSaveInstanceState(outState);
+    }
+    @Override
     public void onDestroy()
     {
-        super.onDestroy();
         if(_compositeDisposable != null && !_compositeDisposable.isDisposed())
         {
             _compositeDisposable.dispose();
         }
+
+        super.onDestroy();
     }
 
-    private void populateControls(CurrencyRate currencyRates)
+    private void populateControls(CurrencyRate currencyRates, Bundle saveInstanceState)
     {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
         adapter.addAll(currencyRates.rates.keySet());
         adapter.insert(currencyRates.base, 0);
         _spinnerCurrency1.setAdapter(adapter);
         _spinnerCurrency2.setAdapter(adapter);
-        _spinnerCurrency1.setSelection(0);
-        _spinnerCurrency2.setSelection(0);
+        if(saveInstanceState != null)
+        {
+            String value = saveInstanceState.getString(SPINNER1_SELECTION);
+            int selectPos = adapter.getPosition(value);
+            _spinnerCurrency1.setSelection(selectPos >= 0 ? selectPos : 0);
+
+            value = saveInstanceState.getString(SPINNER2_SELECTION);
+            selectPos = adapter.getPosition(value);
+            _spinnerCurrency2.setSelection(selectPos >= 0 ? selectPos : 0);
+        }
+        else
+        {
+            _spinnerCurrency1.setSelection(0);
+            _spinnerCurrency2.setSelection(0);
+        }
     }
 
     private void updateUIWithConversionResult(ConverterOutput result)
