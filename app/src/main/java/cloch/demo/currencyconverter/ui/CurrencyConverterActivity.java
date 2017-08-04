@@ -115,11 +115,12 @@ public class CurrencyConverterActivity extends AppCompatActivity
     @Override
     public void onDestroy()
     {
-        super.onDestroy();
         if(_compositeDisposable != null && !_compositeDisposable.isDisposed())
         {
             _compositeDisposable.dispose();
         }
+
+        super.onDestroy();
     }
 
     private void populateControls(CurrencyRate currencyRates)

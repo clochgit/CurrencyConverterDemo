@@ -85,10 +85,17 @@ public class AmountTextWatcher implements TextWatcher
             return;
         }
 
+        String fromUnit = (String)_fromCurrencySpinner.getSelectedItem();
+        String toUnit = (String)_toCurrencySpinner.getSelectedItem();
+        if(fromUnit == null || fromUnit == "" || toUnit == null || toUnit == "")
+        {
+            return;
+        }
+
         ConverterInput input = new ConverterInput(
                 _parent.getId(),
-                (String)_fromCurrencySpinner.getSelectedItem(),
-                (String)_toCurrencySpinner.getSelectedItem(),
+                fromUnit,
+                toUnit,
                 getValue(text));
 
         _textChangedSubject.onNext(input);
