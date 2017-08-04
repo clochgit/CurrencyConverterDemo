@@ -3,10 +3,18 @@ package cloch.demo.currencyconverter.business;
 import java.util.Date;
 import io.reactivex.Observable;
 
+import static cloch.demo.currencyconverter.business.UtilityKt.truncateTime;
+
 /**
  * Created by Chhorvorn on 8/2/2017.
  */
 
+/*
+TODO: ADD UNIT TEST
+FIX DECIMALFILTER
+APP LIFECYCLE
+FIX UI LOOK
+ */
 public class CurrencyConverterService
 {
     private CurrencyRate _exchangeRates;
@@ -16,14 +24,23 @@ public class CurrencyConverterService
     {
         _wrapper = wrapper;
     }
-    public CurrencyValue convert(String fromCurrencyUnit, float fromAmount, String toCurrencyUnit)
+    public ConverterOutput convert(ConverterInput input)
     {
-        CurrencyRate rates = get_exchangeRates(fromCurrencyUnit);
-        float value = rates.rates.get(toCurrencyUnit);
-        CurrencyValue result = new CurrencyValue();
-        result.FromCurrencyUnit = fromCurrencyUnit;
-        result.ToCurrencyUnit = toCurrencyUnit;
-        result.Value = fromAmount * value;
+        ConverterOutput result = new ConverterOutput(input);
+        if(input.FromCurrencyUnit.equalsIgnoreCase(input.ToCurrencyUnit))
+        {
+            result.Date = truncateTime(new Date());
+            result.ToCurrencyRate = 1;
+            result.Output = input.Amount;
+        }
+        else
+        {
+            CurrencyRate rates = get_exchangeRates(input.FromCurrencyUnit);
+            float rateValue = rates.rates.get(input.ToCurrencyUnit);
+            result.Date = rates.date;
+            result.ToCurrencyRate = rateValue;
+            result.Output = input.Amount * rateValue;
+        }
 
         return result;
     }
@@ -34,23 +51,9 @@ public class CurrencyConverterService
                 .doOnNext(this::cacheExchangeRates);
     }
 
-//    public Observable<CurrencyRate> getCurrencyExchangeRates(String baseUnit)
-//    {
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl("http://api.fixer.io")
-//                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-//                .addConverterFactory(GsonConverterFactory.create())
-//                .build();
-//
-//        return retrofit.create(CurrencyRateService.class)
-//                .getCurrency(baseUnit)
-//                .doOnNext(this::cacheExchangeRates);
-//    }
-
-
     private CurrencyRate get_exchangeRates(String baseUnit)
     {
-        Date today = Utility.truncateTime(new Date());
+        Date today = truncateTime(new Date());
 
         if(_exchangeRates == null || !_exchangeRates.base.equalsIgnoreCase(baseUnit) || _exchangeRates.date.compareTo(today) != 0)
         {
