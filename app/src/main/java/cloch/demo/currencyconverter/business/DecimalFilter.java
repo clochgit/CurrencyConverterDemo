@@ -10,16 +10,15 @@ import android.text.method.DigitsKeyListener;
 
 public class DecimalFilter extends DigitsKeyListener
 {
+    private final int _maxDecimalDigits;
+
+    public DecimalFilter(int maxDecimalDigits)
+    {
+        _maxDecimalDigits = maxDecimalDigits;
+    }
     @Override
     public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend)
     {
-        CharSequence out = super.filter(source, start, end, dest, dstart, dend);
-        if(out != null && out.length() > 0)
-        {
-            source = out;
-            start = 0;
-            end = out.length();
-        }
 
         int sourceLength = end - start;
         if(sourceLength == 0)
@@ -33,7 +32,7 @@ public class DecimalFilter extends DigitsKeyListener
         {
             if(dest.charAt(i) == '.')
             {
-                return destLength - (i+1) + sourceLength > 2 ? "" : new SpannableStringBuilder(source, start, end);
+                return destLength - (i+1) + sourceLength > _maxDecimalDigits ? "" : new SpannableStringBuilder(source, start, end);
             }
         }
 
@@ -41,7 +40,7 @@ public class DecimalFilter extends DigitsKeyListener
         {
             if (source.charAt(i) == '.')
             {
-                break;
+                return (destLength - dend)+ (end-(i+1)) > _maxDecimalDigits ? "" : new SpannableStringBuilder(source, start, end);
             }
         }
 

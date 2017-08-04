@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatSpinner;
 import android.support.v7.widget.AppCompatTextView;
+import android.text.InputFilter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -15,6 +16,7 @@ import cloch.demo.currencyconverter.R;
 import cloch.demo.currencyconverter.business.ConverterOutput;
 import cloch.demo.currencyconverter.business.CurrencyRate;
 import cloch.demo.currencyconverter.business.AmountTextWatcher;
+import cloch.demo.currencyconverter.business.DecimalFilter;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -52,8 +54,9 @@ public class CurrencyConverterActivity extends AppCompatActivity
         _spinnerCurrency2 = findViewById(R.id.spinnerCurrency2);
         _textViewRateInfo = findViewById(R.id.textViewRateInfo);
 
-//        _textInputAmount1.setFilters(new InputFilter[]{new DecimalFilter()});
-//        _textInputAmount2.setFilters(new InputFilter[]{new DecimalFilter()});
+        InputFilter[] filters = new InputFilter[]{new DecimalFilter(2)};
+        _textInputAmount1.setFilters(filters);
+        _textInputAmount2.setFilters(filters);
 
 
         _textWatcher1 = createTextWatcher(_textInputAmount1, _spinnerCurrency1, _spinnerCurrency2);
