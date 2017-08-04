@@ -13,7 +13,7 @@ import io.reactivex.subjects.Subject;
  * Created by Chhorvorn on 8/2/2017.
  */
 
-public class NumericTextWatcher implements TextWatcher
+public class AmountTextWatcher implements TextWatcher
 {
     private final Subject<CurrencyValue> _textChangedSubject;
     private final AppCompatActivity _activity;
@@ -22,7 +22,7 @@ public class NumericTextWatcher implements TextWatcher
     private final AppCompatSpinner _toCurrencySpinner;
     private boolean _ignoreChange = false;
 
-    public NumericTextWatcher(AppCompatActivity activity, TextInputEditText parent, AppCompatSpinner fromCurrencySpinner, AppCompatSpinner toCurrencySpinner)
+    public AmountTextWatcher(AppCompatActivity activity, TextInputEditText parent, AppCompatSpinner fromCurrencySpinner, AppCompatSpinner toCurrencySpinner)
     {
         _textChangedSubject = PublishSubject.create();
         _activity = activity;

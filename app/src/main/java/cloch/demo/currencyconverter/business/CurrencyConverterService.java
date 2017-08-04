@@ -2,6 +2,7 @@ package cloch.demo.currencyconverter.business;
 
 import java.util.Date;
 import io.reactivex.Observable;
+import okhttp3.internal.Util;
 
 /**
  * Created by Chhorvorn on 8/2/2017.
@@ -18,12 +19,23 @@ public class CurrencyConverterService
     }
     public CurrencyValue convert(String fromCurrencyUnit, float fromAmount, String toCurrencyUnit)
     {
-        CurrencyRate rates = get_exchangeRates(fromCurrencyUnit);
-        float value = rates.rates.get(toCurrencyUnit);
         CurrencyValue result = new CurrencyValue();
         result.FromCurrencyUnit = fromCurrencyUnit;
         result.ToCurrencyUnit = toCurrencyUnit;
-        result.Value = fromAmount * value;
+        if(result.FromCurrencyUnit.equalsIgnoreCase(result.ToCurrencyUnit))
+        {
+            result.Date = Utility.truncateTime(new Date());
+            result.ToCurrencyRate = 1;
+            result.Value = fromAmount;
+        }
+        else
+        {
+            CurrencyRate rates = get_exchangeRates(fromCurrencyUnit);
+            float value = rates.rates.get(toCurrencyUnit);
+            result.Value = fromAmount * value;
+            result.Date = rates.date;
+            result.ToCurrencyRate = value;
+        }
 
         return result;
     }

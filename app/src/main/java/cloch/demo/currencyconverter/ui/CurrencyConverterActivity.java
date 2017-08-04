@@ -4,16 +4,19 @@ import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.AppCompatSpinner;
-import android.text.InputFilter;
+import android.support.v7.widget.AppCompatTextView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 import cloch.demo.currencyconverter.R;
 import cloch.demo.currencyconverter.business.CurrencyRate;
 import cloch.demo.currencyconverter.business.CurrencyValue;
-import cloch.demo.currencyconverter.business.DecimalFilter;
-import cloch.demo.currencyconverter.business.NumericTextWatcher;
+import cloch.demo.currencyconverter.business.AmountTextWatcher;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -22,15 +25,17 @@ public class CurrencyConverterActivity extends AppCompatActivity
 {
 
     private final CompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private final DateFormat _dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
     CurrencyConverterViewModel _model;
     TextInputEditText _textInputAmount1;
     TextInputEditText _textInputAmount2;
     AppCompatSpinner _spinnerCurrency1;
     AppCompatSpinner _spinnerCurrency2;
+    AppCompatTextView _textViewRateInfo;
 
-    NumericTextWatcher _textWatcher1;
-    NumericTextWatcher _textWatcher2;
+    AmountTextWatcher _textWatcher1;
+    AmountTextWatcher _textWatcher2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -47,6 +52,7 @@ public class CurrencyConverterActivity extends AppCompatActivity
         _textInputAmount2 = findViewById(R.id.textInputAmount2);
         _spinnerCurrency1 = findViewById(R.id.spinnerCurrency1);
         _spinnerCurrency2 = findViewById(R.id.spinnerCurrency2);
+        _textViewRateInfo = findViewById(R.id.textViewRateInfo);
 
 //        _textInputAmount1.setFilters(new InputFilter[]{new DecimalFilter()});
 //        _textInputAmount2.setFilters(new InputFilter[]{new DecimalFilter()});
@@ -69,6 +75,21 @@ public class CurrencyConverterActivity extends AppCompatActivity
             public void onNothingSelected(AdapterView<?> adapterView){}
         });
 
+        _spinnerCurrency1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                _textWatcher1.setIgnoreChange(true);
+                _textWatcher2.setIgnoreChange(true);
+                _textWatcher2.triggerTextChange(_textInputAmount2.getText());
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
         _compositeDisposable.add(
                 _model.getCurrentExchangeRates(CurrencyConverterViewModel.DEFAULT_CURRENCY)
                         .subscribeOn(Schedulers.io())
@@ -79,9 +100,9 @@ public class CurrencyConverterActivity extends AppCompatActivity
 
     }
 
-    private NumericTextWatcher createTextWatcher(TextInputEditText editText, AppCompatSpinner fromSpinner, AppCompatSpinner toSpinner)
+    private AmountTextWatcher createTextWatcher(TextInputEditText editText, AppCompatSpinner fromSpinner, AppCompatSpinner toSpinner)
     {
-        NumericTextWatcher textWatcher = new NumericTextWatcher(this, editText, fromSpinner, toSpinner);
+        AmountTextWatcher textWatcher = new AmountTextWatcher(this, editText, fromSpinner, toSpinner);
         _compositeDisposable.add(
                 textWatcher.TextChange()
                         .debounce(200, TimeUnit.MILLISECONDS)
@@ -110,23 +131,33 @@ public class CurrencyConverterActivity extends AppCompatActivity
 
     private void populateControls(CurrencyRate currencyRates)
     {
-        String[] currencies = new String[currencyRates.rates.size()];
-        currencyRates.rates.keySet().toArray(currencies);
-        _spinnerCurrency1.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, new String[]{"USD"}));
-        _spinnerCurrency2.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, currencies));
+        ArrayAdapter<String> adapter1 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        adapter1.addAll(currencyRates.rates.keySet());
+        adapter1.insert(currencyRates.base, 0);
+        _spinnerCurrency1.setAdapter(adapter1);
+
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item);
+        adapter2.addAll(currencyRates.rates.keySet());
+        _spinnerCurrency2.setAdapter(adapter2);
     }
 
     private void updateUIWithConversionResult(CurrencyValue result)
     {
+        _textViewRateInfo.setText(String.format("1 %s = %s %s on %s", result.FromCurrencyUnit, result.ToCurrencyRate, result.ToCurrencyUnit, _dateFormat.format(result.Date)));
         String spinner1Selection = (String)_spinnerCurrency1.getSelectedItem();
+        String spinner2Selection = (String)_spinnerCurrency2.getSelectedItem();
+        String value = String.format("%.2f", result.Value);
 
         if(spinner1Selection.equalsIgnoreCase(result.ToCurrencyUnit))
         {
-            _textInputAmount1.setText(String.valueOf(result.Value));
+            _textInputAmount1.setText(value);
         }
-        else
+        else if(spinner1Selection.equalsIgnoreCase(spinner2Selection))
         {
-            _textInputAmount2.setText(String.valueOf(result.Value));
+            //TODO:
+        }
+        {
+            _textInputAmount2.setText(value);
         }
     }
 }

@@ -27,55 +27,21 @@ public class DecimalFilter extends DigitsKeyListener
             return source;
         }
 
-        if(dstart < dest.length())
-        {
-            return new SpannableStringBuilder(source, start, end);
-        }
-
         int destLength = dest.length();
-
-        int descimalPoint = -1;
 
         for(int i = 0; i < dstart; i++)
         {
             if(dest.charAt(i) == '.')
             {
-                descimalPoint = i;
-                break;
+                return destLength - (i+1) + sourceLength > 2 ? "" : new SpannableStringBuilder(source, start, end);
             }
         }
 
-        int sourceDecimalPoint = -1;
         for(int i = start; i < end; i++)
         {
             if (source.charAt(i) == '.')
             {
-                sourceDecimalPoint = i;
                 break;
-            }
-        }
-
-        if(descimalPoint >= 0 && sourceDecimalPoint >= 0)
-        {
-            return "";
-        }
-
-//        if(descimalPoint < 0 && sourceDecimalPoint == 0)
-//        {
-//            return "";
-//        }
-
-        if(descimalPoint < 0 && sourceDecimalPoint < 0)
-        {
-            return new SpannableStringBuilder(source, start, end);
-        }
-
-        if(descimalPoint >= 0)
-        {
-            int digitsAfterDecimal = dstart -descimalPoint;
-            if(digitsAfterDecimal > 2)
-            {
-                return "";
             }
         }
 
